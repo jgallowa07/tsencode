@@ -83,7 +83,7 @@ def EncodeTree(ts,width=None):
                       B = 
     '''
    
-    #oldest_time = max([node.time for node in ts.nodes()])
+    oldest_time = max([node.time for node in ts.nodes()])
     oldest_child_index = 0
     A = np.zeros((ts.num_nodes,int(ts.sequence_length),3),dtype=np.int8) - 1
     for edge in ts.edges():
@@ -91,8 +91,8 @@ def EncodeTree(ts,width=None):
         oldest_child_index = max(oldest_child_index,child)
         top,bot = splitInt16(edge.parent)
         #bl = ts.node(edge.parent).time - ts.node(edge.child).time
-        #A[edge.child,int(edge.left):int(edge.right),0] = ts.node(edge.parent).time
-        A[edge.child,int(edge.left):int(edge.right),0] = (ts.node(edge.parent).time/oldest_time)*256
+        A[edge.child,int(edge.left):int(edge.right),0] = ts.node(edge.parent).time
+        #A[edge.child,int(edge.left):int(edge.right),0] = (ts.node(edge.parent).time/oldest_time)*256
         A[edge.child,int(edge.left):int(edge.right),1] = top
         A[edge.child,int(edge.left):int(edge.right),2] = bot
 
@@ -123,6 +123,10 @@ def DecodeTree(A,numSamples,oldestChild):
         flag=0
         if(row < numSamples):
             flag=1
+        try:
+            assert(row == len(node_table))            
+        except:
+            print("nope: ",row)
         node_table.add_row(flags=flag,time=float(row),population=0)
     
         for column in range(num_columns):   
@@ -155,7 +159,7 @@ if __name__ == "__main__":
     #print(A)
     #print(np.argsort(A).astype(float)) 
     
-    ts = msprime.simulate(50,length=100,random_seed=23,recombination_rate=1e-3)
+    ts = msprime.simulate(50,length=100,recombination_rate=1e-3)
     #ts = msprime.simulate(50,length=100,random_seed=23)
     test_dis_ts = DiscretiseTreeSequence(ts)
     test_dis_ts_en,ns,oc = EncodeTree(test_dis_ts)
@@ -170,7 +174,6 @@ if __name__ == "__main__":
             print("before encode: ",edge_b)
             print("after decode: ",edge_d)
             print("--------")
-            #sys.exit()
 
     for (i,(node_b,node_d)) in enumerate(zip(test_dis_ts.nodes(),test_dis_ts_de.nodes())):
         try:
@@ -180,22 +183,5 @@ if __name__ == "__main__":
             print("before encode: ",node_b)
             print("after decode: ",node_d)
             print("--------")
-            #sys.exit()
-    
-
-    #assert(test_dis_ts == test_dis_ts_de)
-
-
-    #for node in tsd.nodes():
-    #    print(node)
-    #tsde = EncodeTree(tsd)
-    #print(tsde.shape)
-    #tsdd = DecodeTree(tsde,numSamples=10)
-
-    #DecodeTree()
-
-    #ET = EncodeTree(tsd)
-    #img = Image.fromarray(ET,mode='RGB')
-    #img.save("Recent4.png")
     
 
