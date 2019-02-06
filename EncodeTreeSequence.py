@@ -11,32 +11,7 @@ Author: Jared Galloway, Jerome Kelleher
 import msprime
 import numpy as np
 import sys
-from PIL import Image
 
-def DiscretiseTreeSequence(ts):
-    '''
-    Disretise float values within a tree sequence
-    
-    mainly for testing purposes to make sure the decoding is equal to pre-encoding.
-    '''    
-
-    tables = ts.dump_tables()
-    nodes = tables.nodes
-    edges = tables.edges
-    oldest_time = max(nodes.time)
-
-    nodes.set_columns(flags=nodes.flags,
-                      time = (nodes.time/oldest_time)*256,
-                      population = nodes.population
-                        )
-    
-    edges.set_columns(left = np.round(edges.left),
-                      right = np.round(edges.right),
-                      child = edges.child,
-                      parent = edges.parent
-                        )
-                      
-    return tables.tree_sequence()
 
 def splitInt16(int16):
     '''
@@ -64,63 +39,25 @@ def GlueInt8(int8_t,int8_b):
     ret = int(bits_a+bits_b,2)
     return np.uint16(ret)
 
-def EncodeTree_F32(ts,width=None):
+def EncodeTreeSequence(ts,width=None,return_8bit=True):
 
     '''
-    Encoding of a tree sequence into a matrix format ideally for DL,
-    But also for visualization purposes
-    
-    for now let's try R = Time
-                      G = Point to parent / Branch Length? 
-                      B = Number of mutations? / type of mutations / total effect size?
-    '''
-
-    pic_width = ts.sequence_length
-    if(width != None):  
-        pic_width = width
-                   
-    A = np.zeros((ts.num_nodes,int(pic_width),3),dtype=np.float32) - 1
-        
-    for i,node in enumerate(ts.nodes()):
-        A[i,0:pic_width,2] = np.float32(node.time)
-        
-    for edge in ts.edges():
-        bl = ts.node(edge.parent).time - ts.node(edge.child).time
-        child = edge.child
-        parent = edge.parent
-        left = int(edge.left)
-        right = int(edge.right)
-        if(width!=None):    
-            left = int((left/ts.sequence_length)*width)
-            right = int((right/ts.sequence_length)*width)
-        A[child,left:right,0] = np.float32(parent)
-        A[child,left:right,1] = np.float32(bl)
-
-    return A
-
-
-def EncodeTree_F64(ts,width=None):
-
-    '''
-
     This one is for testing / visualization: 
     matches nodes.time being float64 
 
     Encoding of a tree sequence into a matrix format ideally for DL,
-    But also for visualization purposes
-
-    
+    But also for visualization purposes    
     '''
+    oldest = max([node.time for node in ts.nodes()])
 
     pic_width = ts.sequence_length
     if(width != None):  
         pic_width = width
                    
-    A = np.zeros((ts.num_nodes,int(pic_width),3),dtype=np.float32) - 1
+    A = np.zeros((ts.num_nodes,int(pic_width),3),dtype=np.float64) - 1
    
     for i,node in enumerate(ts.nodes()):
-        #bl = ts.node(edge.parent).time - ts.node(edge.child).time
-        A[i,0:int(ts.sequence_length),0] = node.time
+        A[i,0:int(ts.sequence_length),0] = (node.time/oldest)*256
         
     for edge in ts.edges():
         child = edge.child
@@ -133,13 +70,54 @@ def EncodeTree_F64(ts,width=None):
         A[edge.child,left:right,1] = top
         A[edge.child,left:right,2] = bot
 
+    if(return_8bit):
+        A = np.uint8(A)
+
     return A
 
+#InverseTest
+def TestEncodeTreeSequence(ts):
+    '''
+    This is the inverse test for the EncodeTreeSequence() function.
+    
+    it simply encodes a discretized tree, then compares it to it's
+    un-encoded counterpart
 
-def DecodeTree_F64(A): 
+    msprime TreeSequence -> boolean
+    '''
+
+    dts = DiscretizeTreeSequence(ts)
+    edts = EncodeTreeSequence(dts,return_8bit=False)
+    de_dts = DecodeTree(edts)
+
+    flag = True
+
+    for (i,(edge_b,edge_d)) in enumerate(zip(dts.edges(),de_dts.edges())):
+        try:
+            assert(edge_b == edge_d)
+        except:
+            flag=False
+            print("MISMATCH, at edge number: ",i)
+            print("before encode: ",edge_b)
+            print("after decode: ",edge_d)
+            print("--------")
+
+    for (i,(node_b,node_d)) in enumerate(zip(dts.nodes(),de_dts.nodes())):
+        try:
+            assert(node_b == node_d)
+        except:
+            flag=False
+            print("MISMATCH, at node number: ",i)
+            print("before encode: ",node_b)
+            print("after decode: ",node_d)
+            print("--------")
+
+    return flag
+
+def DecodeTree(A): 
    
     '''
-    Take in the array produced by 'EncodeTree()' and return a 
+    Take in the array produced by 'EncodeTreeSequence()' and return a 
     the inverse operation to produce a TreeSequence() for testing.
     
     '''
@@ -178,46 +156,32 @@ def DecodeTree_F64(A):
              
     return ts
 
-
-#Testing
-if __name__ == "__main__": 
-    
+def DiscretizeTreeSequence(ts):
     '''
-    #InverseTest
-    test_dis_ts_en,ns = EncodeTree_F64(test_dis_ts)
-    test_dis_ts_de = DecodeTree_F64(test_dis_ts_en,ns)
+    Disretise float values within a tree sequence
+    
+    mainly for testing purposes to make sure the decoding is equal to pre-encoding.
+    '''    
 
-    for (i,(edge_b,edge_d)) in enumerate(zip(test_dis_ts.edges(),test_dis_ts_de.edges())):
-        try:
-            assert(edge_b == edge_d)
-        except:
-            print("MISMATCH, at edge number: ",i)
-            print("before encode: ",edge_b)
-            print("after decode: ",edge_d)
-            print("--------")
+    tables = ts.dump_tables()
+    nodes = tables.nodes
+    edges = tables.edges
+    oldest_time = max(nodes.time)
 
-    for (i,(node_b,node_d)) in enumerate(zip(test_dis_ts.nodes(),test_dis_ts_de.nodes())):
-        try:
-            assert(node_b == node_d)
-        except:
-            print("MISMATCH, at node number: ",i)
-            print("before encode: ",node_b)
-            print("after decode: ",node_d)
-            print("--------")
-    ''' 
+    nodes.set_columns(flags=nodes.flags,
+                      time = (nodes.time/oldest_time)*256,
+                      population = nodes.population
+                        )
+    edges.set_columns(left = np.round(edges.left),
+                      right = np.round(edges.right),
+                      child = edges.child,
+                      parent = edges.parent
+                        )
+    ret = None
+    try:
+        ret = tables.tree_sequence()
+    except:
+        print("msprime doesn't like the discretization, prob too much recombination")
 
-    ts = msprime.simulate(10000,length=10000,recombination_rate=1e-5)
-    #ts = msprime.simulate(50,length=100,random_seed=23)
-    dts = DiscretiseTreeSequence(ts)
-    ets = EncodeTree_F64(dts).astype(np.int8)
-    #ets = EncodeTree_F32(dts,width=1000)
-
-    img = Image.fromarray(ets,mode='RGB')
-    img.save("test.png")
- 
-
-
-
-
-
+    return ret
 
