@@ -11,7 +11,7 @@ Author: Jared Galloway, Jerome Kelleher
 import msprime
 import numpy as np
 import sys
-
+from weightedTrees import *
 
 def splitInt16(int16):
     '''
@@ -57,8 +57,9 @@ def EncodeTreeSequence(ts,width=None,return_8bit=True):
     A = np.zeros((ts.num_nodes,int(pic_width),3),dtype=np.float64) - 1
    
     for i,node in enumerate(ts.nodes()):
-        A[i,0:int(ts.sequence_length),0] = (node.time/oldest)*256
-        
+        time =(node.time/oldest)*256
+        A[i,0:int(ts.sequence_length),0] = time
+    
     for edge in ts.edges():
         child = edge.child
         top,bot = splitInt16(edge.parent)
@@ -69,9 +70,79 @@ def EncodeTreeSequence(ts,width=None,return_8bit=True):
             right = int((right/ts.sequence_length)*width)
         A[edge.child,left:right,1] = top
         A[edge.child,left:right,2] = bot
-
+    
     if(return_8bit):
         A = np.uint8(A)
+
+    return A
+
+def EncodeTreeSequenceProp(ts,
+                        width=None,
+                        return_8bit=True,
+                        sampleWeights=None,
+                        propFunction=None,
+                        normalizePropWeights=True):
+
+    '''
+    This one is for testing / visualization: 
+    matches nodes.time being float64 
+
+    Encoding of a tree sequence into a matrix format ideally for DL,
+    But also for visualization purposes    
+    '''
+    oldest = max([node.time for node in ts.nodes()])
+
+    pic_width = ts.sequence_length
+    if(width != None):  
+        pic_width = width
+                   
+    A = np.zeros((ts.num_nodes,int(pic_width),3),dtype=np.float64) - 1
+   
+    #for i,node in enumerate(ts.nodes()):
+    #    time =(node.time/oldest)*256
+    #    A[i,0:int(ts.sequence_length),0] = time
+    
+    for edge in ts.edges():
+        child = edge.child
+        top,bot = splitInt16(edge.parent)
+        left = int(edge.left)
+        right = int(edge.right)
+        if(width!=None):    
+            left = int((left/ts.sequence_length)*width)
+            right = int((right/ts.sequence_length)*width)
+        #A[child,left:right,1] = top
+        A[child,left:right,2] = bot
+    
+    wt = weighted_trees(ts, sampleWeights, propFunction)
+    for t in wt:
+        left = int((t.interval[0]/ts.sequence_length)*width)
+        right = int((t.interval[1]/ts.sequence_length)*width)
+        if(left == right):
+            continue
+        nodes = np.array([n for n in t.nodes()])
+        inter = right-left
+
+        weights = np.array([w for w in t.node_weights()])
+        for i in range(2):
+            A[nodes,left:right,i] = np.repeat(weights[:,i],inter).reshape([len(weights),inter])
+
+        #for col in range(left,right):
+        #    A[nodes,col,0] = weights
+
+        #for idx,node in enumerate(t.nodes()):
+        #    A[node,left:right,0] = weights[idx]
+    
+    if(normalizePropWeights):
+        for i in range(2):
+            fl = A[:,:,i].flatten() 
+            sh = A[:,:,i].shape      
+            ma = max(fl)
+            nor = ((fl/ma)*256)
+            A[:,:,i] = nor.reshape(sh)
+
+ 
+    if(return_8bit):
+        A = np.where(A<0,0,A).astype(np.uint8)
 
     return A
 
