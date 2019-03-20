@@ -75,14 +75,14 @@ if __name__ == "__main__":
     ''' 
     
     #ts = msprime.simulate(100,length=1e3,recombination_rate=1e-3)
-    ts = pyslim.load("/Users/jaredgalloway/Documents/TreeSequenceEncoding/SLiMTrees/low_dispersal.trees")
+    ts = pyslim.load("./SLiMTrees/low_dispersal.trees")
     ts = ts.simplify()
     encoder = tsEncoder(ts,width=1000)
 
-    #encoder.addParentPointer(split=False)
-    encoder.addNodeTimeLayer()
-    encoder.addBranchLengthLayer()
-    encoder.addSpatialPropLayer(function=np.sum,dim=1)
+    encoder.addParentPointer(split=True)
+    #encoder.addNodeTimeLayer()
+    #encoder.addBranchLengthLayer()
+    encoder.addSpatialPropLayer(function=np.mean,dim=1)
     encoder.normalizeLayers([0,1,2],scale=256)
 
     

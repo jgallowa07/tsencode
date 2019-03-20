@@ -126,12 +126,6 @@ def EncodeTreeSequenceProp(ts,
         for i in range(2):
             A[nodes,left:right,i] = np.repeat(weights[:,i],inter).reshape([len(weights),inter])
 
-        #for col in range(left,right):
-        #    A[nodes,col,0] = weights
-
-        #for idx,node in enumerate(t.nodes()):
-        #    A[node,left:right,0] = weights[idx]
-    
     if(normalizePropWeights):
         for i in range(2):
             fl = A[:,:,i].flatten() 
@@ -139,7 +133,6 @@ def EncodeTreeSequenceProp(ts,
             ma = max(fl)
             nor = ((fl/ma)*256)
             A[:,:,i] = nor.reshape(sh)
-
  
     if(return_8bit):
         A = np.where(A<0,0,A).astype(np.uint8)
