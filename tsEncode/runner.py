@@ -9,6 +9,7 @@ from spatialTreeSequence import *
 from tsEncoder import *
 
 
+
 def shuffleNodes(x):
     t = np.arange(x.shape[0])
     np.random.shuffle(t)
