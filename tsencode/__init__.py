@@ -1,3 +1,2 @@
-from tsencode.helpers import *
-from tsencode.tsEncoder import *
-from tsencode.one_to_one import *
+from tsencode.tsEncoder import TsEncoder    # NOQA
+from tsencode.one_to_one import encode      # NOQA

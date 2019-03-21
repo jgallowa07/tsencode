@@ -54,7 +54,7 @@ class TsEncodeTestCase(unittest.TestCase):
         """
         for n in [2, 10, 20]:
             for mutrate in [0.0]:
-                for recrate in [1e-3,1e-4]:
+                for recrate in [1e-4,1e-5]:
                     for l in [1e2,1e3]:
                         yield msprime.simulate(n, length=l,mutation_rate=mutrate,
                                                recombination_rate=recrate)

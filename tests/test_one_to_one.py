@@ -5,9 +5,8 @@ from __future__ import print_function
 from __future__ import division
 
 import tsencode
-from tsencode.helpers import *
+from tsencode.helpers import GlueInt8
 import pyslim
-import msprime
 import tskit
 import tests
 import unittest
@@ -22,10 +21,10 @@ class TestOneToOneMapping(tests.TsEncodeTestCase):
         
         for ts in self.get_msprime_examples():
             dts = self.DiscretizeTreeSequence(ts)
-            edts = tsencode.EncodeTreeSequence(dts,return_8bit=False)
+            edts = tsencode.encode(dts, return_8bit=False)
             de_dts = self.DecodeTree(edts)
             self.assertTreeSequenceEqual(dts,de_dts)
-
+    
     def DecodeTree(self, A): 
        
         '''
@@ -37,7 +36,7 @@ class TestOneToOneMapping(tests.TsEncodeTestCase):
         num_rows = A.shape[0]    
         num_columns = A.shape[1]    
 
-        tables = msprime.TableCollection(sequence_length=num_columns)
+        tables = tskit.TableCollection(sequence_length=num_columns)
         node_table = tables.nodes
         edge_table = tables.edges
         pop_table = tables.populations
@@ -68,7 +67,7 @@ class TestOneToOneMapping(tests.TsEncodeTestCase):
                  
         return ts
 
-    def DiscretizeTreeSequence(slef, ts):
+    def DiscretizeTreeSequence(self, ts):
         '''
         Disretise float values within a tree sequence
         
