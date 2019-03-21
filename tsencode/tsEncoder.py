@@ -2,9 +2,10 @@
 import msprime
 import numpy as np
 import sys
-from .helpers import *
 import pyslim
+from PIL import Image     
 
+from .helpers import *
 
 class tsEncoder():
     """
@@ -245,7 +246,6 @@ class tsEncoder():
             return self.Encoding
 
     def visualize(self,saveas=None,show=True):
-        from PIL import Image     
 
         imgArray = np.where(self.Encoding<0,0,self.Encoding).astype(np.uint8)[:,:,:3]
         img = Image.fromarray(imgArray,mode='RGB')

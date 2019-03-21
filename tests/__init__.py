@@ -35,6 +35,9 @@ class TsEncodeTestCase(unittest.TestCase):
 
     def assertTreeSequenceEqual(self,ts1,ts2):
         '''
+        Here, we assert that the topology of two 
+        tree sequences are equal
+
         msprime TreeSequence -> boolean
         '''
 
@@ -44,15 +47,11 @@ class TsEncodeTestCase(unittest.TestCase):
         for (node_b,node_d) in zip(ts1.nodes(),ts2.nodes()):
             self.assertEqual(node_b,node_d)
 
-    def get_msprime_example_trees(self):
-        for filename in os.listdir("./msprime_trees"):
-            yield msprime.load(filename)
-
-    def get_slim_example_trees(self):
-        for filename in os.listdir("./slim_trees"):
-            yield pyslim.load(filename)
-
     def get_msprime_examples(self):
+        """
+        Generate some msprime simulations 
+        across a range of parameters for encoding tests 
+        """
         for n in [2, 10, 20]:
             for mutrate in [0.0]:
                 for recrate in [1e-3,1e-4]:
