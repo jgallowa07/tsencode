@@ -5,47 +5,24 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+import tsencode
+import msprime
 import pyslim
 import random
 import unittest
 import base64
 import os
 
-_example_files = ["tests/examples/recipe_WF",
-                 "tests/examples/recipe_nonWF"]
 
 def setUp():
-    # Make random tests reproducible.
-    random.seed(210)
-
-    # run SLiM
-    for filename in _example_files:
-        treefile = filename + ".trees"
-        print(treefile)
-        try:
-            os.remove(treefile)
-        except FileNotFoundError:
-            pass
-        outdir = os.path.dirname(filename)
-        slimfile = os.path.basename(filename) + ".slim"
-        print("running " + "cd " + outdir + " && slim -s 23 " + slimfile)
-        out = os.system("cd " + outdir + " && slim -s 23 " + slimfile + ">/dev/null")
-        assert out == 0
-
+    pass
 
 def tearDown():
-    for filename in _example_files:
-        treefile = filename + ".trees"
-        try:
-            os.remove(treefile)
-            pass
-        except FileNotFoundError:
-            pass
+    pass
 
-
-class PyslimTestCase(unittest.TestCase):
+class TsEncodeTestCase(unittest.TestCase):
     '''
-    Base class for test cases in pyslim.
+    Base class for test cases in tsencode.
     '''
 
     def assertArrayEqual(self, x, y):
@@ -56,19 +33,29 @@ class PyslimTestCase(unittest.TestCase):
         for a, b in zip(x, y):
             self.assertAlmostEqual(a, b)
 
-    def verify_haplotype_equality(self, ts, slim_ts):
-        self.assertEqual(ts.num_sites, slim_ts.num_sites)
-        for j, v1, v2 in zip(range(ts.num_sites), ts.variants(),
-                             slim_ts.variants()):
-            g1 = [v1.alleles[x] for x in v1.genotypes]
-            g2 = [v2.alleles[x] for x in v2.genotypes]
-            self.assertArrayEqual(g1, g2)
+    def assertTreeSequenceEqual(self,ts1,ts2):
+        '''
+        msprime TreeSequence -> boolean
+        '''
 
-    def get_slim_example_files(self):
-        for filename in _example_files:
-            yield filename + ".trees"
+        for (edge_b,edge_d) in zip(ts1.edges(),ts2.edges()):
+            self.assertEqual(edge_b,edge_d)
 
-    def get_slim_examples(self):
-        for filename in self.get_slim_example_files():
-            print("---->", filename)
-yield pyslim.load(filename)
+        for (node_b,node_d) in zip(ts1.nodes(),ts2.nodes()):
+            self.assertEqual(node_b,node_d)
+
+    def get_msprime_example_trees(self):
+        for filename in os.listdir("./msprime_trees"):
+            yield msprime.load(filename)
+
+    def get_slim_example_trees(self):
+        for filename in os.listdir("./slim_trees"):
+            yield pyslim.load(filename)
+
+    def get_msprime_examples(self):
+        for n in [2, 10, 20]:
+            for mutrate in [0.0]:
+                for recrate in [1e-3,1e-4]:
+                    for l in [1e2,1e3]:
+                        yield msprime.simulate(n, length=l,mutation_rate=mutrate,
+                                               recombination_rate=recrate)

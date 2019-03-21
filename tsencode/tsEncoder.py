@@ -2,9 +2,9 @@
 import msprime
 import numpy as np
 import sys
-#from weightedTrees import *
-from helpers import *
+from .helpers import *
 import pyslim
+
 
 class tsEncoder():
     """
