@@ -5,14 +5,14 @@ This is the starting code for endcoding an msprime TreeSequence Object into a 3D
 
 ## Installation
 
-To install `pyslim`, do
+To install `tsencode`, do
 ```
-git clone https://github.com/tskit-dev/pyslim.git
-cd pyslim
+git clone https://github.com/jgallowa07/tsencode
+cd tsencode
 python setup.py install --user
 ```
 You should also be able to install it with `pip install pyslim`.
-You'll also need an up-to-date [msprime](https://github.com/tskit-dev/msprime) and [SLiM](https://messerlab.org/slim/).
+You'll also need an up-to-date [tskit](https://github.com/tskit-dev/tskit)
 
 To run the tests to make sure everything is working, do:
 ```
