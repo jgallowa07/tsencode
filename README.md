@@ -9,7 +9,7 @@ To install `tsencode`, do
 ```
 git clone https://github.com/jgallowa07/tsencode
 cd tsencode
-python3 setup.py install --user
+python3 setup.py install
 ```
 You should also be able to install it with `pip install pyslim`. *NOT YET*
 You'll also need an up-to-date [tskit](https://github.com/tskit-dev/tskit)
