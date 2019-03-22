@@ -23,7 +23,7 @@ python -m nose tests
 
 ## Quickstart: Creating a quick visualization
 
-There are two basic functions of tsencode at the moment. 
+There are two basic functions of `tsencode` at the moment. 
 
 1: There is a simple one-to-one encoding of a Tree Sequence that can be reached through `tsencode.encode(ts)`
 
@@ -38,13 +38,28 @@ img = Image.fromarray(enc)
 img.show()
 ```
 
-2: Next, we have a `TsEncoder` class which can be used to build up an encoding by adding 2D 'layers'
-to a 3D tensor (numpy array).
+2: There are many possible uses of a Tree Sequence encoding, so, we'd like to make 
+some interface where users can easily build visualizations with a given set of tools 
+which could be easily extended in a framework.  
+
+Here, I have mocked up a `TsEncoder` class which can be used to build up an encoding by adding 2D 'layers'
+to a 3D tensor (numpy array). This will allow the user to "mix & match" the encoding properties which
+most closely apply to thier specific problem. 
+
+*This is very rough (aka no error handling, or many checks) but I wanted to post it so we can discuss the design*
+
+Here's an example of how this work's so far:
 
 ```
 import tsencode
-import msprime
-from PIL import Image
+import pyslim
+import numpy as np
 
-
+ts = pyslim.load("slim_trees/low_dispersal_2d_slim.trees")
+ts = ts.simplify()
+encoder = TsEncoder(ts,width=1000)
+encoder.add_branch_length_layer()
+encoder.add_spatial_prop_layer(function=np.mean,dim=2)
+encoder.normalize_layers([0,1,2],scale=256)
+encoder.visualize(show=True)
 ```

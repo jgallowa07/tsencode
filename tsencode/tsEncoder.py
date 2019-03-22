@@ -2,8 +2,8 @@
 import numpy as np
 from PIL import Image
 
-from .helpers import weighted_trees
-from .helpers import splitInt16
+from tsencode.helpers import weighted_trees
+from tsencode.helpers import splitInt16
 
 
 class TsEncoder():
@@ -50,6 +50,9 @@ class TsEncoder():
 
         return None
 
+    def map_locus_to_column(self, locus):
+        return int((locus/self.ts.sequence_length)*self.width)
+
     def add_node_time_layer(self):
         """
         (msprime TreeSequence, numpy dtype) -> None
@@ -83,11 +86,8 @@ class TsEncoder():
 
         for edge in self.ts.edges():
             child = edge.child
-            left = int(edge.left)
-            right = int(edge.right)
-            if(self.width != int(self.ts.sequence_length)):
-                left = int((left/self.ts.sequence_length)*self.width)
-                right = int((right/self.ts.sequence_length)*self.width)
+            left = self.map_locus_to_column(edge.left)
+            right = self.map_locus_to_column(edge.right)
             if(split):
                 top, bot = splitInt16(edge.parent)
                 self.Encoding[child, left:right, self.layerIndex-1] = bot
@@ -107,11 +107,8 @@ class TsEncoder():
             child = edge.child
             parent = edge.parent
             bl = self.ts.node(parent).time - self.ts.node(child).time
-            left = int(edge.left)
-            right = int(edge.right)
-            if(self.width != int(self.ts.sequence_length)):
-                left = int((left/self.ts.sequence_length)*self.width)
-                right = int((right/self.ts.sequence_length)*self.width)
+            left = self.map_locus_to_column(edge.left)
+            right = self.map_locus_to_column(edge.right)
             self.Encoding[child, left:right, self.layerIndex] = bl
 
         return None
@@ -167,16 +164,15 @@ class TsEncoder():
                     coordinates[d][ind.nodes[geno]] = ind.location[d]
         wt = weighted_trees(self.ts, coordinates, function)
         for t in wt:
-            left = int((t.interval[0]/self.ts.sequence_length)*self.width)
-            right = int((t.interval[1]/self.ts.sequence_length)*self.width)
+            left = self.map_locus_to_column(t.interval[0])
+            right = self.map_locus_to_column(t.interval[1])
             if left is right:
                 continue
             nodes = np.array([n for n in t.nodes()])
             inter = right-left
             weights = np.array([w for w in t.node_weights()])
             for i in range(dim):
-                layer = np.repeat(weights[:, i], inter).reshape([len(weights), inter])
-                self.Encoding[nodes, left:right, self.layerIndex-i] = layer
+                self.Encoding[nodes, left:right, self.layerIndex-i] = np.repeat(weights[:, i], inter).reshape([len(weights), inter])    # NOQA
 
         return None
 
@@ -192,8 +188,16 @@ class TsEncoder():
 
     def visualize(self, saveas=None, show=True):
 
+        # TODO: not sure that zero'ing out neg numbers is the right heuristic here
         img_array = np.where(self.Encoding < 0, 0, self.Encoding).astype(np.uint8)
-        img_array = img_array[:, :, :3]
+        
+        # if there is less than three layers, add trivial layers to the image
+        if(self.layerIndex < 2):
+            nn = self.ts.num_nodes
+            trivial_layers = np.zeros([nn, int(self.width), 2-self.layerIndex]).astype(np.uint8)
+            img_array = np.append(img_array, trivial_layers, axis=2)
+        else: 
+            img_array = img_array[:, :, :3]
         img = Image.fromarray(img_array, mode='RGB')
         if(show):
             img.show()

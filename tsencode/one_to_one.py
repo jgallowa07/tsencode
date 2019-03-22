@@ -10,7 +10,7 @@ Author: Jared Galloway, Jerome Kelleher
 '''
 import numpy as np
 
-from .helpers import splitInt16
+from tsencode.helpers import splitInt16
 
 
 def encode(ts, width=None, return_8bit=True):
