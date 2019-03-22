@@ -190,13 +190,13 @@ class TsEncoder():
 
         # TODO: not sure that zero'ing out neg numbers is the right heuristic here
         img_array = np.where(self.Encoding < 0, 0, self.Encoding).astype(np.uint8)
-        
+
         # if there is less than three layers, add trivial layers to the image
         if(self.layerIndex < 2):
             nn = self.ts.num_nodes
-            trivial_layers = np.zeros([nn, int(self.width), 2-self.layerIndex]).astype(np.uint8)
+            trivial_layers = np.zeros([nn, int(self.width), 2-self.layerIndex]).astype(np.uint8)    #NOQA
             img_array = np.append(img_array, trivial_layers, axis=2)
-        else: 
+        else:
             img_array = img_array[:, :, :3]
         img = Image.fromarray(img_array, mode='RGB')
         if(show):
