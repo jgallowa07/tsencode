@@ -30,7 +30,9 @@ setup(name='tsencode',
       install_requires=['msprime>=0.7.0', 
                         'tskit', 
                         'pyslim',
-                        'numpy'],
+                        'numpy'
+                        'itertools',
+                        'PIL'],
       extras_require={
           'dev': [],
       },
