@@ -57,7 +57,7 @@ import numpy as np
 
 ts = pyslim.load("slim_trees/low_dispersal_2d_slim.trees")
 ts = ts.simplify()
-encoder = TsEncoder(ts,width=1000)
+encoder = tsencode.TsEncoder(ts,width=1000)
 encoder.add_branch_length_layer()
 encoder.add_spatial_prop_layer(function=np.mean,dim=2)
 encoder.normalize_layers([0,1,2],scale=256)
