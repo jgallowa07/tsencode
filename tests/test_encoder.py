@@ -12,7 +12,7 @@ np.random.seed(23)
 
 class TestEncoding(tests.TsEncodeTestCase):
     """
-    Tests for the TsEncoder class. 
+    Tests for the TsEncoder class.
     """
 
     def test_initialize_layer_msprime(self):
@@ -93,8 +93,8 @@ class TestEncoding(tests.TsEncodeTestCase):
         tsencode/helpers.py is producing the right results in a very simple encoding.
 
         The results found tests/trivial_tree_tables/trivial_tree_encoding.npz
-        were checked by hand to ensure correctness, and here we compare those results 
-        to those being produced by the TsEncoder class. 
+        were checked by hand to ensure correctness, and here we compare those results
+        to those being produced by the TsEncoder class.
         """
         ts = self.get_trivial_ts()
         encoder = tsencode.TsEncoder(ts)

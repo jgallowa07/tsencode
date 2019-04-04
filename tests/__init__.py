@@ -83,7 +83,7 @@ class TsEncodeTestCase(unittest.TestCase):
         for testing.
 
         In practice, recapitation is going to be helpful for
-        all slim tree sequences when using tsencode, but not required. 
+        all slim tree sequences when using tsencode, but not required.
         """
         pass
 

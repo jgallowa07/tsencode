@@ -23,11 +23,10 @@ python3 -m nose tests
 
 ## Quickstart: Creating a quick visualization
 
-There are two basic functions of `tsencode` at the moment. 
-
-1: There is a simple one-to-one encoding of a Tree Sequence that can be reached through `tsencode.encode(ts)`
+1: There is a simple one-to-one encoding of a Tree Sequence that can be reached through `TsEncoder.add_one_to_one`
 
 ```
+# Example 1
 import tsencode
 import msprime
 
@@ -51,15 +50,19 @@ most closely apply to thier specific problem.
 Here's an example of how this work's so far:
 
 ```
-import tsencode
+# Example 2
 import pyslim
 import numpy as np
+from tsencode import TsEncoder
+from tsencode.helpers import get_genome_coordinates
 
-ts = pyslim.load("slim_trees/low_dispersal_2d_slim.trees")
+ts = pyslim.load("tests/slim_trees/high_dispersal_2d_slim.trees")
+ts = ts.recapitate(Ne=500,recombination_rate=1e-8)
 ts = ts.simplify()
-encoder = tsencode.TsEncoder(ts,width=1000)
-encoder.add_branch_length_layer()
-encoder.add_spatial_prop_layer(function=np.mean,dim=2)
+encoder = TsEncoder(ts,width=1000)
+weights = get_genome_coordinates(ts, dim=2)
+encoder.add_prop_layer(initial_weights=weights,function=np.mean)
+encoder.add_node_time_layer()
 encoder.normalize_layers([0,1,2],scale=256)
 encoder.visualize(show=True)
 ```
