@@ -1,4 +1,6 @@
 '''
+DEPRECATED: this function can be acheived through the
+TsEncoder.add_one_to_one() method
 
 Encoding Tree Sequence,
 This is code that takes in a treeSequence object from msprime,

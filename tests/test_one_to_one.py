@@ -20,7 +20,10 @@ class TestOneToOneMapping(tests.TsEncodeTestCase):
 
         for ts in self.get_msprime_examples():
             dts = self.DiscretizeTreeSequence(ts)
-            edts = tsencode.encode(dts, return_8bit=False)
+            # edts1 = tsencode.encode(dts, return_8bit=False)
+            encoder = tsencode.TsEncoder(dts)
+            encoder.add_one_to_one()
+            edts = encoder.get_encoding()
             de_dts = self.DecodeTree(edts)
             self.assertTreeSequenceEqual(dts, de_dts)
 
@@ -50,7 +53,7 @@ class TestOneToOneMapping(tests.TsEncodeTestCase):
                 if((top < 0) | (bot < 0)):
                     continue
                 parent = GlueInt8(top, bot)
-                edge_table.add_row(left=column, right=column+1, parent=parent, child=row)
+                edge_table.add_row(left=column, right=column + 1, parent=parent, child=row) # NOQA
         tables.sort()
         tables.simplify()
         ts = tables.tree_sequence()
@@ -67,7 +70,7 @@ class TestOneToOneMapping(tests.TsEncodeTestCase):
         edges = tables.edges
         oldest_time = max(nodes.time)
         nodes.set_columns(flags=nodes.flags,
-                          time=(nodes.time/oldest_time)*256,
+                          time=(nodes.time / oldest_time) * 256,
                           population=nodes.population)
         edges.set_columns(left=np.round(edges.left),
                           right=np.round(edges.right),

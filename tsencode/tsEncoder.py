@@ -27,7 +27,8 @@ class TsEncoder():
             self.height = treeSequence.num_nodes
         self.width = width
         if width is None:
-            self.width = int(treeSequence.sequence_length)
+            self.width = treeSequence.sequence_length
+        self.width = int(self.width)
         self.datatype = dtype
         if dtype is None:
             self.datatype = np.float64
@@ -40,7 +41,7 @@ class TsEncoder():
         """
 
         nn = self.ts.num_nodes
-        layer = np.zeros([nn, int(self.width), 1]).astype(self.datatype)
+        layer = np.zeros([nn, int(self.width), 1]).astype(self.datatype) - 1
         if(self.layerIndex < 0):
             self.Encoding = layer
             self.layerIndex = 0
@@ -51,7 +52,7 @@ class TsEncoder():
         return None
 
     def map_locus_to_column(self, locus):
-        return int((locus/self.ts.sequence_length)*self.width)
+        return int((locus / self.ts.sequence_length) * self.width)
 
     def add_node_time_layer(self):
         """
@@ -90,8 +91,8 @@ class TsEncoder():
             right = self.map_locus_to_column(edge.right)
             if(split):
                 top, bot = splitInt16(edge.parent)
-                self.Encoding[child, left:right, self.layerIndex-1] = bot
-                self.Encoding[child, left:right, self.layerIndex] = top
+                self.Encoding[child, left:right, self.layerIndex - 1] = top
+                self.Encoding[child, left:right, self.layerIndex] = bot
             else:
                 self.Encoding[child, left:right, self.layerIndex] = edge.parent
 
@@ -113,7 +114,8 @@ class TsEncoder():
 
         return None
 
-    def normalize_layers(self, layers=[], scale=256):
+    def normalize_layers(self, layers=[], scale=256, trans="linear"):
+        # TODO make log scale norm
         '''
         This function will normailize a layer by finding the
         max value in that layer, and normailizing all values
@@ -125,54 +127,72 @@ class TsEncoder():
         for i in layers:
             fl = self.Encoding[:, :, i].flatten()
             sh = self.Encoding[:, :, i].shape
-            ma = max(fl)
-            nor = ((fl/ma)*scale)
+            if trans == "linear":
+                ma = max(fl)
+                nor = ((fl / ma) * scale)
+            else:
+                # This still needs work: Talk to Peter
+                log_fl = np.log(fl + 1)
+                ma = max(log_fl)
+                nor = ((log_fl / ma) * scale)
             self.Encoding[:, :, i] = nor.reshape(sh)
 
         return None
 
-    def add_prop_layer(self):
+    def add_prop_layer(self, initial_weights, function):
         # TODO Finish making this universal
         """
         None -> None
 
         This will be a general propagation layer
         """
-
-        pass
-
-    def add_spatial_prop_layer(self, function, dim=2, normalizePropWeights=True):
-        """
-        (msprime TreeSequence) -> None
-
-        This will be a propagation layer which
-        will use spatial locations as the initial weights
-
-        The parameter, function, will be used to calculate
-        weights of all parents as a function of their children's
-        weights
-        """
-
+        dim = len(initial_weights)
         for i in range(dim):
             self.initialize_layer()
-        coordinates = []
-        for i in range(dim):
-            coordinates.append(np.zeros(self.ts.num_samples))
-        for ind in self.ts.individuals():
-            for d in range(dim):
-                for geno in range(2):
-                    coordinates[d][ind.nodes[geno]] = ind.location[d]
-        wt = weighted_trees(self.ts, coordinates, function)
+
+            # check to see that each set of weights provided is equal to the number
+            # of samples, If not throw an error.
+            if self.ts.num_samples is not len(initial_weights[i]):
+                # TODO raise error
+                return None
+
+        wt = weighted_trees(self.ts, initial_weights, function)
         for t in wt:
             left = self.map_locus_to_column(t.interval[0])
             right = self.map_locus_to_column(t.interval[1])
+
+            # If the image has been squished enough, skip this tree because it
+            # won't add anything to the encoding.
             if left is right:
                 continue
+
             nodes = np.array([n for n in t.nodes()])
-            inter = right-left
+            inter = right - left
             weights = np.array([w for w in t.node_weights()])
-            for i in range(dim):
-                self.Encoding[nodes, left:right, self.layerIndex-i] = np.repeat(weights[:, i], inter).reshape([len(weights), inter])    # NOQA
+            l, r = left, right
+            n, i, w = nodes, inter, weights
+            for d in range(dim):
+                pl = self.layerIndex - d
+                # this may be confusing, but essentially
+                # it's just a vectorized way to populate the encoding with the node weights # NOQA
+                self.Encoding[n, l:r, pl] = np.repeat(w[:, (dim-1)-d], i).reshape([len(w), i]) # NOQA
+
+                # how I was originally doing it
+                # self.Encoding[nodes, left:right, self.layerIndex-i] = np.repeat(weights[:, i], inter).reshape([len(weights), inter])    # NOQA
+
+        return None
+
+    def add_one_to_one(self):
+        """
+        This function should replicate the one-to-one function found int
+        tsencode/one_to_one.py.
+
+        For now, it is mostly for testing purposes do to code that has been
+        written to inverse this function.
+        """
+
+        self.add_node_time_layer()
+        self.add_parent_pointer(split=True)
 
         return None
 
@@ -194,7 +214,7 @@ class TsEncoder():
         # if there is less than three layers, add trivial layers to the image
         if(self.layerIndex < 2):
             nn = self.ts.num_nodes
-            trivial_layers = np.zeros([nn, int(self.width), 2-self.layerIndex]).astype(np.uint8)    #NOQA
+            trivial_layers = np.zeros([nn, int(self.width), 2 - self.layerIndex]).astype(np.uint8) # NOQA
             img_array = np.append(img_array, trivial_layers, axis=2)
         else:
             img_array = img_array[:, :, :3]

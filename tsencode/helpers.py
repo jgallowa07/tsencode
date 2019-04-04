@@ -8,6 +8,25 @@ import numpy as np
 import itertools
 
 
+def get_genome_coordinates(ts, dim=1):
+    """
+    Loop through the tree sequence and
+    get all coordinates of each genome of diploid individual.
+
+    :param dim: the dimentionality, 1,2, or 3.
+    """
+
+    coordinates = []
+    for i in range(dim):
+        coordinates.append(np.zeros(ts.num_samples))
+    for ind in ts.individuals():
+        for d in range(dim):
+            for geno in range(2):
+                coordinates[d][ind.nodes[geno]] = ind.location[d]
+
+    return coordinates
+
+
 def splitInt16(int16):
     '''
     Take in a 16 bit integer, and return the top and bottom 8 bit integers
@@ -32,7 +51,7 @@ def GlueInt8(int8_t, int8_b):
     int8_b = np.uint8(int8_b)
     bits_a = np.binary_repr(int8_t, 8)
     bits_b = np.binary_repr(int8_b, 8)
-    ret = int(bits_a+bits_b, 2)
+    ret = int(bits_a + bits_b, 2)
     return np.uint16(ret)
 
 
