@@ -77,6 +77,16 @@ class TsEncodeTestCase(unittest.TestCase):
         for filename in _slim_example_files:
             yield pyslim.load(filename)
 
+    def get_recapitated_slim_examples(self):
+        """
+        load some slim tree sequences and recaptiate them
+        for testing.
+
+        In practice, recapitation is going to be helpful for
+        all slim tree sequences when using tsencode, but not required. 
+        """
+        pass
+
     def get_trivial_ts(self):
         """
         load in a trivial tree seuqence for testing purposes

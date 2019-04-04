@@ -30,16 +30,16 @@ There are two basic functions of `tsencode` at the moment.
 ```
 import tsencode
 import msprime
-from PIL import Image
 
 ts = msprime.simulate(100,length=1e3,recombination_rate=1e-2)
-enc = tsencode.encode(ts)
-img = Image.fromarray(enc)
-img.show()
+encoder = TsEncoder(ts)
+encoder.add_one_to_one()
+encoder.normalize_layers(layers=[0])
+encoder.visualize(show=True)
 ```
 
-2: There are many possible uses of a Tree Sequence encoding, so, we'd like to make 
-some interface where users can easily build visualizations with a given set of tools 
+2: There are many possible uses of a Tree Sequence encoding, so, we'd like to have
+an API where users can easily build visualizations with a given set of tools 
 which could be easily extended in a framework.  
 
 Here, I have mocked up a `TsEncoder` class which can be used to build up an encoding by adding 2D 'layers'
