@@ -130,9 +130,13 @@ class TsEncoder():
             if trans == "linear":
                 ma = max(fl)
                 nor = ((fl / ma) * scale)
-            else:
+            elif trans == "log":
                 # This still needs work: Talk to Peter
                 log_fl = np.log(fl + 1)
+                ma = max(log_fl)
+                nor = ((log_fl / ma) * scale)
+            else:
+                log_fl = np.exp(fl)
                 ma = max(log_fl)
                 nor = ((log_fl / ma) * scale)
             self.Encoding[:, :, i] = nor.reshape(sh)

@@ -1,5 +1,5 @@
 # TreeEncoding
-This is the starting code for endcoding an `tskit` TreeSequence Object into a 3D array for ML and visualization purposes
+This is the starting code for endcoding an [tskit](https://github.com/tskit-dev/tskit) TreeSequence Object into a 3D array for ML and visualization purposes
 
 
 
@@ -27,7 +27,7 @@ python3 -m nose tests
 
 ```
 # Example 1
-import tsencode
+from tsencode import TsEncode
 import msprime
 
 ts = msprime.simulate(100,length=1e3,recombination_rate=1e-2)
