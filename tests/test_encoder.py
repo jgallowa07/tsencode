@@ -102,5 +102,5 @@ class TestEncoding(tests.TsEncodeTestCase):
         encoder.add_prop_layer(weights, np.sum)
         encoding = encoder.get_encoding()
 
-        correct_encoding = np.load("tests/trivial_tree_tables/trivial_encoding.npz")
+        correct_encoding = np.load("tests/trivial_tree_tables/trivial_encoding.npz", allow_pickle=True)
         self.assertTrue(np.array_equal(encoding, correct_encoding))
